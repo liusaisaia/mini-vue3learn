@@ -7,12 +7,12 @@
 class ReactiveEffect {
   private _fn: any
 
-  constructor(fn) {
+  constructor(fn, public scheduler?) {
     this._fn = fn;
   }
   run() {
     activeEffect = this
-    this._fn()
+    return this._fn()
   }
 }
 
@@ -44,14 +44,21 @@ export function trigger(target, key) {
   let dep = depsMap.get(key)
 
   for (const effect of dep) {
+    if (effect.scheduler) {
+      effect.scheduler()
+    } else {
+      effect.run()
+    }
     // 执行用户给的fn
     effect.run()
   }
 }
 // 
 let activeEffect;
-export function effect(fn) {
-  
-  const _effect = new ReactiveEffect(fn);
+export function effect(fn, options: any = {}) {
+
+  const _effect = new ReactiveEffect(fn, options.scheduler);
   _effect.run()
+
+  return _effect.run.bind(_effect) // 处理指针问题  以当前的this
 }

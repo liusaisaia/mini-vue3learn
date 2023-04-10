@@ -24,4 +24,18 @@ describe('effect', () => {
     user.age ++;
     expect(nextAge).toBe(12)
   })
+
+  // 调用effect return runner
+  it('should return runner when call effect', (runner) => {
+    // 1. effect(fn) -> function(runner) -> fn -> return
+    let foo = 10
+    effect(() => {
+      foo ++
+      return "foo"
+    })
+    expect(foo).toBe(11)
+    const r = runner()
+    expect(foo).toBe(12)
+    expect(r).toBe("foo")
+  })
 })
