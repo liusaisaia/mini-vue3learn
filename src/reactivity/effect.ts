@@ -6,7 +6,8 @@
  */
 class ReactiveEffect {
   private _fn: any
-
+  deps = []
+  active = true
   constructor(fn, public scheduler?) {
     this._fn = fn;
   }
@@ -14,6 +15,20 @@ class ReactiveEffect {
     activeEffect = this
     return this._fn()
   }
+
+  stop() {
+    // 删除effect
+    if (this.active) {
+      clearEffect(this)
+      this.active = false
+    }
+  }
+}
+
+function clearEffect (effect) {
+  effect.deps.forEach((dep: any) => {
+    dep.delete(effect)
+  })
 }
 
 // 收集依赖
@@ -35,6 +50,7 @@ export function track(target, key) {
   }
   // 获取 fn 创建全局变量从effect中获取
   dep.add(activeEffect)
+  activeEffect.deps.push(dep)
 }
 
 // 触发依赖
@@ -60,5 +76,13 @@ export function effect(fn, options: any = {}) {
   const _effect = new ReactiveEffect(fn, options.scheduler);
   _effect.run()
 
-  return _effect.run.bind(_effect) // 处理指针问题  以当前的this
+  const runner:any = _effect.run.bind(_effect) // 处理指针问题  以当前的this
+  runner.effect = _effect
+  return  runner
+}
+
+
+
+export function stop (runner) {
+  runner.effect.stop()
 }
